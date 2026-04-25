@@ -1,0 +1,15 @@
+node_modules/
+dist/
+data/
+uploads/
+.git/
+.env
+.env.local
+.env.*.local
+context/
+workspace/
+docs/
+*.log
+*.tsbuildinfo
+test-results/
+playwright-report/

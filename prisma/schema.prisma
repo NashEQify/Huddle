@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth ───────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  username          String    @unique
+  usernameCanonical String    @unique @map("username_canonical")
+  email             String
+  isAdmin           Boolean   @default(false) @map("is_admin")
+  isActive          Boolean   @default(true) @map("is_active")
+  lastLoginAt       DateTime? @map("last_login_at")
+  previousLoginAt   DateTime? @map("previous_login_at")
+  lastSeenAt        DateTime? @map("last_seen_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  credentials       Credential?
+  sessions          Session[]
+  profile           UserProfile?
+  roomsCreated      Room[]            @relation("RoomCreator")
+  memberships       GroupMembership[]
+  messages          Message[]
+  reactions         Reaction[]
+  dmParticipantA    DirectConversation[] @relation("ParticipantA")
+  dmParticipantB    DirectConversation[] @relation("ParticipantB")
+  readPositions     ReadPosition[]
+
+  @@map("users")
+}
+
+model Credential {
+  userId             String   @id @map("user_id")
+  passwordHash       String   @map("password_hash")
+  mustChangePassword Boolean  @default(false) @map("must_change_password")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credentials")
+}
+
+model Session {
+  id        String    @id
+  userId    String    @map("user_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ─── Profile / Identity ─────────────────────────────────
+
+enum AvatarKind {
+  built_in
+  uploaded
+}
+
+model UserProfile {
+  userId          String     @id @map("user_id")
+  title           String     @default("")
+  avatarKind      AvatarKind @default(built_in) @map("avatar_kind")
+  builtInAvatarId String?    @map("built_in_avatar_id")
+  portraitUrl     String?    @map("portrait_url")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model BuiltInAvatar {
+  id       String @id
+  label    String
+  imageUrl String @map("image_url")
+
+  @@map("built_in_avatars")
+}
+
+model TitlePoolEntry {
+  id     String @id @default(cuid())
+  title  String
+  source String @default("seed")
+
+  @@map("title_pool")
+}
+
+model MotdQuote {
+  id          String @id @default(cuid())
+  text        String @db.VarChar(200)
+  attribution String @db.VarChar(60)
+  source      String @default("seed")
+
+  @@map("motd_quotes")
+}
+
+// ─── Chat Domain ────────────────────────────────────────
+
+model Room {
+  id             String   @id @default(cuid())
+  name           String   @db.VarChar(50)
+  discoverable   Boolean  @default(true)
+  passwordHash   String?  @map("password_hash")
+  createdBy      String   @map("created_by")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  creator     User              @relation("RoomCreator", fields: [createdBy], references: [id])
+  memberships GroupMembership[]
+
+  @@map("rooms")
+}
+
+model DirectConversation {
+  id             String   @id @default(cuid())
+  participantAId String   @map("participant_a_id")
+  participantBId String   @map("participant_b_id")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  participantA User      @relation("ParticipantA", fields: [participantAId], references: [id])
+  participantB User      @relation("ParticipantB", fields: [participantBId], references: [id])
+
+  @@unique([participantAId, participantBId])
+  @@index([participantAId])
+  @@index([participantBId])
+  @@map("direct_conversations")
+}
+
+enum MembershipState {
+  joined
+  left
+  not_joined
+}
+
+model GroupMembership {
+  roomId   String          @map("room_id")
+  userId   String          @map("user_id")
+  state    MembershipState @default(not_joined)
+  joinedAt DateTime?       @map("joined_at")
+  leftAt   DateTime?       @map("left_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+  @@index([userId, state])
+  @@map("group_memberships")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  scopeType String   @map("scope_type")
+  scopeId   String   @map("scope_id")
+  authorId  String   @map("author_id")
+  content   String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // v2: soft-delete fields
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // v2: edit tracking
+  editedAt  DateTime? @map("edited_at")
+  editedBy  String?   @map("edited_by")
+
+  // v2: reply-to (self-relation, SetNull on parent hard-delete)
+  replyToId String?   @map("reply_to_id")
+  replyTo   Message?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Message[] @relation("MessageReplies")
+
+  author      User         @relation(fields: [authorId], references: [id])
+  attachments Attachment[]
+  reactions   Reaction[]
+  // Note: scope_id references either rooms.id or direct_conversations.id
+  // based on scope_type. Dual FK is not possible in Prisma — referential
+  // integrity is enforced at application level.
+
+  @@index([scopeType, scopeId, createdAt])
+  @@map("messages")
+}
+
+model Attachment {
+  id          String   @id @default(cuid())
+  messageId   String   @map("message_id")
+  filename    String   @db.VarChar(200)
+  contentType String   @map("content_type")
+  sizeBytes   Int      @map("size_bytes")
+  storagePath String   @map("storage_path")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model Reaction {
+  messageId String @map("message_id")
+  userId    String @map("user_id")
+  emoji     String
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId, emoji])
+  @@map("reactions")
+}
+
+// ─── Read Positions (Server-Side Unread Tracking) ──────
+
+model ReadPosition {
+  userId     String   @map("user_id")
+  scopeType  String   @map("scope_type")  // "room" | "direct"
+  scopeId    String   @map("scope_id")
+  lastReadAt DateTime @map("last_read_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, scopeType, scopeId])
+  @@map("read_positions")
+}

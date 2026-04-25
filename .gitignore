@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+.prisma/
+prisma/migrations/migration_lock.toml
+
+# Uploads (runtime data)
+/data/
+/uploads/
+src/server/uploads/
+
+# Agent workspace (temporary)
+workspace/
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite
+vite.config.ts.timestamp-*
+
+# Test results
+test-results/
+playwright-report/
+context/
+
+# Launch planning (internal)
+docs/launch-posts/
+docs/LAUNCH.md
+docs/hetzner-deploy/
+docs/solve/
+
+# Task scaffolding + ledger (private, moved to context/)
+docs/ledger/
+tmp/
+
+# MediaPipe WASM runtime — copied from node_modules at build/dev time
+# (see src/client/vite.config.ts copyMediapipeWasm plugin).
+# The selfie_segmenter.tflite model IS committed (~244KB, stable).
+src/client/public/mediapipe/wasm/
+
+# Build tooling — lives in context/ (private huddle-context repo)
+docs/backlog.md
+docs/plan.yaml
+docs/tasks/
+docs/reviews/
