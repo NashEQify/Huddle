@@ -1,0 +1,13 @@
+# Local development override — no auto-restart, app runs on host.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres livekit
+# Or via npm: npm run dev:infra
+
+services:
+  app:
+    restart: "no"
+  postgres:
+    restart: "no"
+    ports:
+      - "5432:5432"
+  livekit:
+    restart: "no"

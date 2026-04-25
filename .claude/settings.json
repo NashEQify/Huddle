@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/projects/Huddle/context/scripts/commit-guard.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/projects/Huddle/context/scripts/dirty-warn.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

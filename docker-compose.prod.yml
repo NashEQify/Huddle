@@ -1,0 +1,53 @@
+# Production override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Reverse proxy routes needed (Caddy / nginx / cloudflared):
+#   your-app-domain.com     -> http://localhost:3000  (app)
+#   your-livekit-domain.com -> http://localhost:7890   (livekit signaling)
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        VITE_LIVEKIT_URL: ${VITE_LIVEKIT_URL:-}
+    # localhost only — for LiveKit webhook (host network) and cloudflared
+    # Not exposed to internet (UFW blocks, cloudflared tunnels separately)
+    ports: !override
+      - "127.0.0.1:3000:3000"
+    volumes:
+      # Persistent upload storage — bind mount to host directory
+      - ./data/uploads:/data/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # Override base: LiveKit runs on host network at port 7890, not in Docker network
+      - LIVEKIT_URL=ws://host.docker.internal:7890
+    networks:
+      - default
+
+  postgres:
+    # Security fix: no host port in production — app connects via Docker network (postgres:5432)
+    # Docker bypasses UFW, so any host port bind = public internet exposure
+    ports: !override []
+    volumes:
+      # Persistent PostgreSQL data — bind mount to host directory
+      - ./data/pgdata:/var/lib/postgresql/data
+    networks:
+      - default
+
+  livekit:
+    # Host network: LiveKit needs to see real network interfaces for ICE/STUN.
+    # use_external_ip: true panics in Docker bridge (can't discover public IP).
+    network_mode: host
+    ports: !override []
+    networks: !override {}
+    extra_hosts: !override []
+    volumes:
+      # LiveKit production config — lives outside repo (contains api_key for webhooks)
+      # Copy livekit.prod.yaml to this path and fill in your api_key
+      - ./livekit.prod.yaml:/etc/livekit.yaml:ro
+
+networks:
+  default:
+    name: huddle_app_net
