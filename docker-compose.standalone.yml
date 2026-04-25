@@ -1,0 +1,68 @@
+# Huddle — Standalone deployment (pre-built image)
+#
+# For users who don't want to build from source.
+# Usage:
+#   1. Download this file + .env.example + livekit.prod.yaml from the repo
+#   2. cp .env.example .env && edit .env with real secrets
+#   3. Edit livekit.prod.yaml with your server IP and API key
+#   4. docker compose -f docker-compose.standalone.yml up -d
+#
+# Requires: Docker, a domain + reverse proxy, port 7882/UDP open
+
+services:
+  app:
+    image: ghcr.io/nasheqify/huddle:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./data/uploads:/data/uploads
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/huddle
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - LIVEKIT_URL=ws://host.docker.internal:7890
+      - LIVEKIT_PUBLIC_URL=${LIVEKIT_PUBLIC_URL:-}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - NODE_ENV=production
+      - PORT=3000
+      - UPLOAD_DIR=/data/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 512m
+
+  postgres:
+    image: postgres:16.13
+    restart: unless-stopped
+    volumes:
+      - ./data/pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=huddle
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d huddle"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 1g
+
+  livekit:
+    image: livekit/livekit-server:v1.9.12
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./livekit.prod.yaml:/etc/livekit.yaml:ro
+    environment:
+      - "LIVEKIT_KEYS=${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    command: --config /etc/livekit.yaml
+    mem_limit: 512m

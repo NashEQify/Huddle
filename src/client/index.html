@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <title>Huddle</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Debug overlay: catches ALL JS errors including module failures.
+         Remove once Safari issue is diagnosed. -->
+    <script>
+      function showError(title, detail) {
+        var d = document.getElementById('_dbg') || document.createElement('pre');
+        d.id = '_dbg';
+        d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a0000;color:#ff6666;font:12px monospace;padding:12px;white-space:pre-wrap;max-height:60vh;overflow:auto';
+        d.textContent = (d.textContent ? d.textContent + '\n---\n' : '') + title + '\n' + detail;
+        document.body.appendChild(d);
+      }
+      window.onerror = function(msg, src, line, col, err) {
+        showError('onerror: ' + msg, 'at ' + src + ':' + line + ':' + col + '\n' + (err && err.stack || ''));
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        var r = e.reason;
+        showError('unhandledrejection', r && r.stack ? r.stack : String(r));
+      });
+      // Timeout: if React hasn't rendered after 5s, the module failed silently
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        if (root && root.children.length === 0) {
+          showError('Module load timeout', 'React did not render within 5s. The main JS module likely failed to load or parse.\nCheck: Safari version, unsupported JS syntax in bundle.\nUA: ' + navigator.userAgent);
+        }
+      }, 5000);
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
