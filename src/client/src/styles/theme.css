@@ -1,0 +1,496 @@
+/* Huddle — Terminal Pastell Design System
+   Source of Truth: CLAUDE.md (Kurzfassung) */
+
+:root {
+  /* ── Background Layers ── */
+  --bg-base:       #1a1a2e;
+  --bg-surface:    #1f1f35;
+  --bg-elevated:   #25253f;
+  --bg-input:      #16162a;
+
+  /* ── Primary Accent: Mint/Sage ── */
+  --accent:        #a8d8b9;
+  --accent-dim:    #7ab892;
+  --accent-muted:  #4a7a5e;
+  --accent-glow:   rgba(168, 216, 185, 0.15);
+
+  /* ── Text ── */
+  --text-primary:  #e0e0e8;
+  --text-secondary:#8888a0;
+  --text-muted:    #555570;
+  --text-accent:   #a8d8b9;
+
+  /* ── Semantic ── */
+  --error:         #e07070;
+  --warning:       #d4b896;
+  --success:       #a8d8b9;
+  --info:          #89b4d4;
+
+  /* ── Borders ── */
+  --border-default:#2a2a45;
+  --border-active: #a8d8b9;
+
+  /* ── Speaking / Call Indicators ── */
+  --glow-speaking: rgba(168, 216, 185, 0.6);
+  --glow-ring:     0 0 0 3px rgba(168, 216, 185, 0.3);
+
+  /* ── Typography ── */
+  --font-mono: 'IBM Plex Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --font-body: var(--font-mono);
+
+  /* ── Chat-specific ── */
+  --chat-font-size: 0.875rem;
+
+  /* ── Type Scale ── */
+  --text-xs:   0.75rem;
+  --text-sm:   0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg:   1rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.5rem;
+
+  /* ── Spacing ── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+}
+
+/* ── Base Styles ── */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-default); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-muted); }
+
+/* ── Slider (Range Input) ── */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+input[type="range"]:focus-visible {
+  box-shadow: var(--glow-ring);
+}
+
+/* ── IconButton focus-visible (keyboard nav) ── */
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ── VideoGrid ── */
+
+.video-grid-tile {
+  aspect-ratio: 16 / 9;
+}
+
+@supports not (aspect-ratio: 16 / 9) {
+  .video-grid-tile {
+    height: 200px;
+  }
+}
+
+.video-grid-container--scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-muted) var(--bg-input);
+}
+
+.video-grid-container--scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.video-grid-container--scrollable::-webkit-scrollbar-track {
+  background: var(--bg-input);
+}
+
+.video-grid-container--scrollable::-webkit-scrollbar-thumb {
+  background: var(--accent-muted);
+}
+
+/* ── Mobile Responsive ── */
+
+@media (max-width: 768px) {
+  .sidebar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+  }
+
+  .sidebar-container.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 20, 0.5);
+    z-index: 49;
+  }
+
+  .mobile-main-content {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .mobile-sidebar-toggle {
+    display: flex !important;
+  }
+
+  /* Increase tap targets on mobile */
+  .sidebar-container button {
+    min-height: 44px;
+  }
+
+  .sidebar-container a {
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar-backdrop {
+    display: none !important;
+  }
+}
+
+/* ── Narrow Screen: VideoGrid 1-column ── */
+@media (max-width: 500px) {
+  .video-grid-inner {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Screenshare: fullscreen mode ── */
+[data-testid="screenshare-preview"]:fullscreen {
+  max-height: none !important;
+  background: #000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+[data-testid="screenshare-preview"]:fullscreen video {
+  max-height: 100vh !important;
+  max-width: 100vw !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+/* Webkit prefix for Safari */
+[data-testid="screenshare-preview"]:-webkit-full-screen {
+  max-height: none !important;
+  background: #000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+[data-testid="screenshare-preview"]:-webkit-full-screen video {
+  max-height: 100vh !important;
+  max-width: 100vw !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+/* ── Message Row: show timestamp on hover for grouped messages ── */
+
+.message-row:hover .message-hover-time {
+  opacity: 1 !important;
+}
+
+/* ── Color Schemes ── */
+
+/* Amber Console — warm CRT monitor feel */
+[data-theme="amber"] {
+  --bg-base:       #1a1510;
+  --bg-surface:    #211c14;
+  --bg-elevated:   #2a2319;
+  --bg-input:      #15120c;
+  --accent:        #d4a24c;
+  --accent-dim:    #b8882e;
+  --accent-muted:  #7a5a1e;
+  --accent-glow:   rgba(212, 162, 76, 0.15);
+  --text-primary:  #e8e0d0;
+  --text-secondary:#a09078;
+  --text-muted:    #6a5a48;
+  --text-accent:   #d4a24c;
+  --error:         #e07050;
+  --warning:       #e8c870;
+  --success:       #a8c870;
+  --info:          #70a8d0;
+  --border-default:#302818;
+  --border-active: #d4a24c;
+  --glow-speaking: rgba(212, 162, 76, 0.6);
+  --glow-ring:     0 0 0 3px rgba(212, 162, 76, 0.3);
+}
+
+/* Arctic — cool blue-white, high readability */
+[data-theme="arctic"] {
+  --bg-base:       #101820;
+  --bg-surface:    #141e28;
+  --bg-elevated:   #1a2632;
+  --bg-input:      #0c1418;
+  --accent:        #88c8e8;
+  --accent-dim:    #5ea8d0;
+  --accent-muted:  #3a7090;
+  --accent-glow:   rgba(136, 200, 232, 0.15);
+  --text-primary:  #e0e8f0;
+  --text-secondary:#7890a8;
+  --text-muted:    #4a6078;
+  --text-accent:   #88c8e8;
+  --error:         #e87070;
+  --warning:       #e8c888;
+  --success:       #70d8a8;
+  --info:          #88c8e8;
+  --border-default:#1e2e3e;
+  --border-active: #88c8e8;
+  --glow-speaking: rgba(136, 200, 232, 0.6);
+  --glow-ring:     0 0 0 3px rgba(136, 200, 232, 0.3);
+}
+
+/* High Contrast — maximum readability for tired eyes */
+[data-theme="high-contrast"] {
+  --bg-base:       #0a0a0a;
+  --bg-surface:    #141414;
+  --bg-elevated:   #1e1e1e;
+  --bg-input:      #060606;
+  --accent:        #00ff88;
+  --accent-dim:    #00cc6a;
+  --accent-muted:  #008844;
+  --accent-glow:   rgba(0, 255, 136, 0.15);
+  --text-primary:  #f0f0f0;
+  --text-secondary:#a0a0a0;
+  --text-muted:    #606060;
+  --text-accent:   #00ff88;
+  --error:         #ff5555;
+  --warning:       #ffcc00;
+  --success:       #00ff88;
+  --info:          #55aaff;
+  --border-default:#2a2a2a;
+  --border-active: #00ff88;
+  --glow-speaking: rgba(0, 255, 136, 0.6);
+  --glow-ring:     0 0 0 3px rgba(0, 255, 136, 0.3);
+}
+
+/* Lavender Dusk — soft purple evening tones */
+[data-theme="lavender"] {
+  --bg-base:       #1a1520;
+  --bg-surface:    #211a28;
+  --bg-elevated:   #2a2232;
+  --bg-input:      #15101a;
+  --accent:        #c0a0e0;
+  --accent-dim:    #a080c8;
+  --accent-muted:  #6a5088;
+  --accent-glow:   rgba(192, 160, 224, 0.15);
+  --text-primary:  #e0dce8;
+  --text-secondary:#908898;
+  --text-muted:    #585060;
+  --text-accent:   #c0a0e0;
+  --error:         #e07080;
+  --warning:       #e0c090;
+  --success:       #90d0a0;
+  --info:          #90b0d8;
+  --border-default:#2a2238;
+  --border-active: #c0a0e0;
+  --glow-speaking: rgba(192, 160, 224, 0.6);
+  --glow-ring:     0 0 0 3px rgba(192, 160, 224, 0.3);
+}
+
+/* Rose Terminal — warm pink/rose tones */
+[data-theme="rose"] {
+  --bg-base:       #1a1218;
+  --bg-surface:    #221820;
+  --bg-elevated:   #2c1e28;
+  --bg-input:      #140e14;
+  --accent:        #e0a0b0;
+  --accent-dim:    #c88090;
+  --accent-muted:  #885060;
+  --accent-glow:   rgba(224, 160, 176, 0.15);
+  --text-primary:  #e8e0e4;
+  --text-secondary:#988890;
+  --text-muted:    #605058;
+  --text-accent:   #e0a0b0;
+  --error:         #e07070;
+  --warning:       #e0c890;
+  --success:       #90d0a8;
+  --info:          #90b0d8;
+  --border-default:#302028;
+  --border-active: #e0a0b0;
+  --glow-speaking: rgba(224, 160, 176, 0.6);
+  --glow-ring:     0 0 0 3px rgba(224, 160, 176, 0.3);
+}
+
+/* Monochrome — pure black & white, no color */
+[data-theme="monochrome"] {
+  --bg-base:       #0c0c0c;
+  --bg-surface:    #141414;
+  --bg-elevated:   #1e1e1e;
+  --bg-input:      #080808;
+  --accent:        #d0d0d0;
+  --accent-dim:    #a0a0a0;
+  --accent-muted:  #606060;
+  --accent-glow:   rgba(208, 208, 208, 0.12);
+  --text-primary:  #e8e8e8;
+  --text-secondary:#909090;
+  --text-muted:    #585858;
+  --text-accent:   #d0d0d0;
+  --error:         #d0d0d0;
+  --warning:       #b0b0b0;
+  --success:       #d0d0d0;
+  --info:          #b0b0b0;
+  --border-default:#2a2a2a;
+  --border-active: #d0d0d0;
+  --glow-speaking: rgba(208, 208, 208, 0.6);
+  --glow-ring:     0 0 0 3px rgba(208, 208, 208, 0.3);
+}
+
+/* Norton Commander — classic DOS blue with white text */
+[data-theme="norton"] {
+  --bg-base:       #00006e;
+  --bg-surface:    #00007a;
+  --bg-elevated:   #000088;
+  --bg-input:      #000060;
+  --accent:        #55ffff;
+  --accent-dim:    #00cccc;
+  --accent-muted:  #006688;
+  --accent-glow:   rgba(85, 255, 255, 0.15);
+  --text-primary:  #ffffff;
+  --text-secondary:#b0b0cc;
+  --text-muted:    #5566aa;
+  --text-accent:   #55ffff;
+  --error:         #ff5555;
+  --warning:       #ffffff;
+  --success:       #55ff55;
+  --info:          #55ffff;
+  --border-default:#2244aa;
+  --border-active: #55ffff;
+  --glow-speaking: rgba(85, 255, 255, 0.6);
+  --glow-ring:     0 0 0 3px rgba(85, 255, 255, 0.3);
+}
+
+/* Paper — warm off-white, like dot-matrix printer output */
+[data-theme="paper"] {
+  --bg-base:       #f4f1ea;
+  --bg-surface:    #eae7df;
+  --bg-elevated:   #e0dcd4;
+  --bg-input:      #f9f7f2;
+  --accent:        #4a7a5a;
+  --accent-dim:    #3a6248;
+  --accent-muted:  #8aaa96;
+  --accent-glow:   rgba(74, 122, 90, 0.12);
+  --text-primary:  #2a2a32;
+  --text-secondary:#6a6a78;
+  --text-muted:    #9a9aa4;
+  --text-accent:   #4a7a5a;
+  --error:         #c04040;
+  --warning:       #a08030;
+  --success:       #4a7a5a;
+  --info:          #4070a0;
+  --border-default:#d0ccc2;
+  --border-active: #4a7a5a;
+  --glow-speaking: rgba(74, 122, 90, 0.5);
+  --glow-ring:     0 0 0 3px rgba(74, 122, 90, 0.25);
+}
+
+/* Frost — cool blue-white, like morning ice */
+[data-theme="frost"] {
+  --bg-base:       #f0f2f8;
+  --bg-surface:    #e6e8f0;
+  --bg-elevated:   #dcdee8;
+  --bg-input:      #f5f6fc;
+  --accent:        #4878a8;
+  --accent-dim:    #366090;
+  --accent-muted:  #8aa4c0;
+  --accent-glow:   rgba(72, 120, 168, 0.12);
+  --text-primary:  #1e2030;
+  --text-secondary:#606880;
+  --text-muted:    #9098a8;
+  --text-accent:   #4878a8;
+  --error:         #b83838;
+  --warning:       #907028;
+  --success:       #388060;
+  --info:          #4878a8;
+  --border-default:#c8ccd8;
+  --border-active: #4878a8;
+  --glow-speaking: rgba(72, 120, 168, 0.5);
+  --glow-ring:     0 0 0 3px rgba(72, 120, 168, 0.25);
+}
+
+/* ── Animations ── */
+
+@keyframes banner-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Speaking Glow Pulse ── */
+
+@keyframes speaking-pulse {
+  0%   { box-shadow: 0 0 0 2px rgba(168, 216, 185, 0.7), 0 0 8px rgba(168, 216, 185, 0.3); }
+  50%  { box-shadow: 0 0 0 4px rgba(168, 216, 185, 0.9), 0 0 16px rgba(168, 216, 185, 0.5); }
+  100% { box-shadow: 0 0 0 2px rgba(168, 216, 185, 0.7), 0 0 8px rgba(168, 216, 185, 0.3); }
+}
+
+.avatar-speaking {
+  animation: speaking-pulse 1s ease-in-out infinite;
+}

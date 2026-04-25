@@ -1,0 +1,24 @@
+# LiveKit Server Configuration — local development
+# For production, use livekit.prod.yaml instead.
+
+port: 7880
+
+rtc:
+  port_range_start: 7882
+  port_range_end: 7882
+  tcp_port: 7881           # ICE TCP fallback — must be exposed in Docker
+  use_external_ip: false   # local dev: false
+  node_ip: 127.0.0.1  # localhost — use your LAN IP if testing from other devices
+
+keys:
+  devkey: devsecret
+
+room:
+  empty_timeout: 60  # seconds — destroy room 60s after last participant leaves
+
+webhook:
+  urls:
+    # host.docker.internal lets LiveKit (in Docker) reach the app (outside Docker)
+    # Linux: needs --add-host=host.docker.internal:host-gateway in docker-compose
+    - http://host.docker.internal:3000/api/livekit/webhook
+  api_key: devkey

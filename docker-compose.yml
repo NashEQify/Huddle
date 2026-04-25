@@ -1,0 +1,88 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      # Host port is overridable via HUDDLE_APP_PORT env var for setups where
+      # :3000 is already taken (e.g. developer machines running other stacks).
+      # Container port stays 3000. Default: 3000.
+      - "127.0.0.1:${HUDDLE_APP_PORT:-3000}:3000"
+    volumes:
+      - ${UPLOAD_HOST_DIR:-./data/uploads}:/data/uploads
+    environment:
+      # All defaults below are for local evaluation only.
+      # For production, set these in a .env file (see .env.example).
+      - DATABASE_URL=postgresql://${DB_USER:-huddle}:${DB_PASSWORD:-huddle}@postgres:5432/huddle
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-devsecret}
+      - LIVEKIT_URL=ws://livekit:7880
+      - LIVEKIT_PUBLIC_URL=${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
+      - SESSION_SECRET=${SESSION_SECRET:-CHANGE-ME-dev-only-session-secret-not-for-production-use}
+      - NODE_ENV=production
+      - PORT=3000
+      - UPLOAD_DIR=/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgres:
+    image: postgres:16.13
+    restart: unless-stopped
+    # Port exposed for local dev (host npm run dev connects via localhost:5433)
+    # MUST bind to 127.0.0.1 — Docker bypasses UFW, 0.0.0.0 = public internet
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=huddle
+      - POSTGRES_USER=${DB_USER:-huddle}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-huddle}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-huddle} -d huddle"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  livekit:
+    image: livekit/livekit-server:v1.9.12
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7880:7880"       # Signaling — local dev needs this; production: cloudflared handles it
+      - "127.0.0.1:7881:7881/tcp"   # ICE TCP fallback (needed when UDP fails for second connection)
+      - "127.0.0.1:7882:7882/udp"   # Media (WebRTC)
+      # TURN on 443 removed — home networks don't need TURN.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # Linux: lets LiveKit reach app for webhooks
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    environment:
+      - "LIVEKIT_KEYS=${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-devsecret}"
+    command: --config /etc/livekit.yaml
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:

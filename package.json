@@ -1,0 +1,37 @@
+{
+  "name": "huddle",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm run -w src/server dev",
+    "dev:client": "npm run -w src/client dev",
+    "build": "npm run build:shared && npm run build:server && npm run build:client",
+    "build:shared": "npm run -w src/shared build",
+    "build:server": "npm run -w src/server build",
+    "build:client": "npm run -w src/client build",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "npx prisma db seed",
+    "db:reset": "npx prisma migrate reset",
+    "dev:infra": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres livekit",
+    "dev:infra:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down"
+  },
+  "workspaces": [
+    "src/client",
+    "src/server",
+    "src/shared"
+  ],
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "concurrently": "^9.1.2",
+    "form-data": "^4.0.5",
+    "jsdom": "^29.0.0",
+    "tsx": "^4.19.3",
+    "vitest": "^4.1.0"
+  }
+}
